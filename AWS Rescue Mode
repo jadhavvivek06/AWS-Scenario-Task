@@ -1,0 +1,47 @@
+AWS Rescue Mode 
+
+Scenario:
+You are managing an EC2 instance hosting a production app. Suddenly, the instance becomes unreachable via SSH. On investigation, you realize:
+Disk utilization is 100% full
+Load average is extremely high
+You cannot even SSH into the instance
+
+ Question:
+ How will you recover this EC2 instance and bring it back to a stable state?
+
+
+Solution (Step-by-Step):
+Stop the Instance
+Go to the AWS Console → EC2 → Select the instance → Stop it.
+Detach the Root Volume
+From the instance details, detach the root EBS volume.
+Attach to a Helper Instance
+Launch/identify another healthy EC2 instance.
+Attach the detached volume as a secondary disk to this helper instance.
+Mount the Volume
+SSH into the helper instance.
+Mount the secondary volume (e.g., /dev/xvdf → /mnt/rescue).
+Free Up Space
+Navigate inside /mnt/rescue and check large files.
+Delete old logs, temp files, or move unused data to S3.
+
+Example:
+sudo du -sh * | sort -h 
+sudo rm -rf /mnt/rescue/var/log/old_logs/*
+
+Detach and Reattach
+Unmount the volume.
+Detach it from the helper instance.
+Reattach it as the root volume to the original instance.
+Start the Instance
+Boot up the original EC2 instance.
+Now SSH should work fine.
+
+
+Prevention Tips:
+Use CloudWatch alarms to monitor disk usage.
+Implement log rotation to prevent oversized log files.
+Use EBS Auto-Scaling (gp3, io2) or EFS/S3 for heavy storage workloads.
+
+Learning:
+Rescue Mode (via detach/attach volumes) is a life-saving technique for AWS EC2 when normal SSH access is blocked.
